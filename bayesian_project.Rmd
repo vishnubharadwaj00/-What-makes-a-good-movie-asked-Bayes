@@ -1,0 +1,410 @@
+
+# How to make a good movie
+
+## Setup
+
+### Load packages
+
+Let us load the 4 packages needed for this analysis. ggplot2 and gridExtra are required for the data visualizations, dplyr is needed for data manipulation and wrangling, statsr consists of all the statistical functions needed, BAS has the Bayesian functions and MASS contains the stepAIC function. 
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(statsr)
+library(BAS)
+library(MASS)
+
+```
+
+### Load data
+
+The dataset can be loaded in two ways, either by using going to File->Open File and clicking on the R Workspace file to load the data, or using the load() function. Here, we use the latter:
+
+```{r load-data}
+load("movies.Rdata")
+dim(movies)
+```
+
+The dataset imported has 651 rows and 32 columns.
+
+* * *
+
+## Part 1: Data
+
+Rotten Tomatoes and the TomatometerT rating is the most trusted measurement of quality entertainment. As the leading online aggregator of movie and TV show reviews from professional critics, Rotten Tomatoes offers the most comprehensive guide to what's fresh. The world famous TomatometerT rating represents the percentage of positive professional reviews for films and TV shows and is used by millions every day, to help with their entertainment viewing decisions. Rotten Tomatoes designates the best reviewed movies and TV shows as Certified Fresh. That accolade is awarded with Tomatometer ratings of 75% and higher, and a required minimum number of reviews. Weekly Rotten Tomatoes podcasts can be found on RottenTomatoes.com, iTunes, Soundcloud and Stitcher, and Rotten Tomatoes' entertainment experts make regular TV and radio appearances across the US.
+
+*Data Collection*
+
+**Generalizability**
+
+The present data were derived from an observational study. The data set is comprised of 651 randomly sampled movies produced and released from 1970 to 2014. According to IMDb, there have 9,962 movies been release from 1972 to 2016 so that the 10% condition (9,962*0.01 = 996) is met. Since the sampling size is large enough and less than 10% of population, it can assume that the random sampling is conducted. Therefore we can conclude that the sample is indeed generalizable to the entire population.
+
+**Causality**
+The data cannot be used to establish a causal relation between the variables of interest as there was no random assignment to the explanatory and independent variables.
+
+
+* * *
+
+## Part 2: Data manipulation
+
+In the original dataset , not all of the required features have been provided, so we will perform some feature engineering to create the required features. For the analysis, new features as oscar_season, summer_season, mpaa_rating_R, drama and feature_film. All of them can be derived from existing variables in the dataset. 
+
+```{r}
+movies <-movies %>% mutate(feature_film = as.factor(ifelse(title_type == "Feature Film", "Yes", "No"))) 
+movies <- movies %>% mutate(drama = as.factor(ifelse(genre == 'Drama', 'Yes', 'No')))
+movies <- movies %>% mutate(mpaa_rating_R=as.factor(ifelse(mpaa_rating=="R","Yes","No")))
+movies <- movies %>% mutate(oscar_season=as.factor(ifelse(thtr_rel_month %in% c('10','11','12'),"Yes","No")))
+movies <- movies %>% mutate(summer_season=as.factor(ifelse(thtr_rel_month %in% c('6','7','8'),"Yes", "No")))
+```
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+Firstly, let us see the analyze the audience_score variable:
+
+*Audience Score:*
+
+```{r}
+summary(movies$audience_score)
+```
+
+The lowest rating is 11 (Battlefield Earth) and the highest rating is 97.00 (The Godfather Part 2). 
+The median score is 65.00, with a mean of 62.36.
+
+```{r}
+ggplot(data=movies,aes(x=audience_score)) + geom_histogram(binwidth=5) 
+```
+
+Using a binwidth=5, we get a readable display. It is evident that this data is left-skewed, with more values on the right side of the mean than the left. 
+
+```{r}
+ggplot(data=movies,aes(x=audience_score)) + geom_density()
+```
+
+This plot clearly shows the left skew of the audience_score variable.
+
+Now, using the variables created in the previous section, plots and summary statistics make it easier to understand the data we have created.
+
+*Feature Film:*
+
+This variable contains a "Yes" value if it is a Feature Film and a "No" value if it is not.
+
+```{r}
+summary(movies$feature_film)
+```
+
+This shows that there is mainly a huge majority of feature films. Actually, (591*100)/651= 90.738 % of the data are feature films.
+
+Plotting this data against audience_score and IMDB rating:
+
+```{r}
+g1=ggplot(data=movies,aes(x=feature_film,y=audience_score,fill=feature_film)) +geom_boxplot()
+g2=ggplot(data=movies,aes(x=feature_film,y=imdb_rating,fill=feature_film)) + geom_boxplot()
+grid.arrange(g1,g2)
+```
+
+Although there are fewer feature films, the distribution shows that feature films generally have a lower score than non-feature films. But this could also be attributed to the fewer number of feature films. 
+
+*Drama:*
+
+This variable contains a "Yes" value if it is a Drama movie and a "No" value if it is not.
+
+Let us check the summary statistics for the drama variable:
+
+```{r}
+summary(movies$drama)
+```
+
+Here, the number of drama and non-drama movies are close in count, but there are slightly more non-drama movies.
+
+Plotting this variable against audience_score and IMDB rating:
+
+```{r}
+g3=ggplot(data=movies,aes(x=drama,y=audience_score,fill=drama)) +geom_boxplot()
+g4=ggplot(data=movies,aes(x=drama,y=imdb_rating,fill=drama)) + geom_boxplot()
+grid.arrange(g3,g4)
+```
+
+There isn't a huge difference but the non-drama movies have slightly lower media score compared to the drama movies. The non-drama movies are also slightly more distributed, but not by a whole lot. 
+
+
+*MPAA Rating:*
+
+This variable contains a "Yes" value if the movies has an R MPAA Rating and a "No" value if it is not R-rated.
+
+The summary statistics for the MPAA rating:
+```{r}
+summary(movies$mpaa_rating_R)
+```
+
+The number of R-rated movies and movies with other ratings are very close. 
+
+Plotting this variable:
+
+```{r}
+g5=ggplot(data=movies,aes(x=mpaa_rating_R,y=audience_score,fill=mpaa_rating_R)) +geom_boxplot()
+g6=ggplot(data=movies,aes(x=mpaa_rating_R,y=imdb_rating,fill=mpaa_rating_R)) + geom_boxplot()
+grid.arrange(g5,g6)
+```
+
+The ratings are very similar for R-rated and non R-rated movies.
+
+Their distributions are also extremely similar, with not much to split the two variables.
+
+*Oscar Season:*
+
+This variable contains a "Yes" value if it was released in the Oscar season and a "No" value if it was not released in the Oscar season. 
+
+The summary of the Oscar variable:
+```{r}
+summary(movies$oscar_season)
+```
+
+There are fewer movies that are released in the Oscar season and only about (191*100)/651=29.3394% are released in the Oscar season. 
+
+Let us plot the variable:
+
+```{r}
+g7=ggplot(data=movies,aes(x=oscar_season,y=audience_score,fill=oscar_season)) +geom_boxplot()
+g8=ggplot(data=movies,aes(x=oscar_season,y=imdb_rating,fill=oscar_season)) + geom_boxplot()
+grid.arrange(g7,g8)
+```
+
+There are slightly higher scores for the movies released in the Oscar Season, but the distributions seem similar. 
+
+*Summer season:*
+
+This variable contains a "Yes" value if it was released in the Oscar season and a "No" value if it is not.
+
+The summary of the summer variable:
+
+```{r}
+summary(movies$summer_season)
+```
+
+Again, most movies are not released in the summer months. Only about (164*100)/651= 25.192% of the movies are released in the summer. 
+
+Plotting this variable against ratings:
+```{r}
+g9=ggplot(data=movies,aes(x=summer_season,y=audience_score,fill=summer_season)) +geom_boxplot()
+g10=ggplot(data=movies,aes(x=summer_season,y=imdb_rating,fill=summer_season)) + geom_boxplot()
+grid.arrange(g9,g10)
+```
+
+The plots are almost identical, with very minute differences between them, if any. The movies not released in the summer season have very slightly higher scores, but the difference looks insignificant.
+
+* * *
+
+## Part 4: Modeling
+
+The best model is not always the most complicated. Sometimes including variables that are not evidently important, can actually reduce the accuracy of predictions. In practice, the model that includes all available explanatory variables is often referred to as the full model. The full model may not be the best model, and if it isn't, we want to identify a smaller model that is preferable. 
+
+*Full model:*
+audience_score ~ feature_film + drama + runtime + mpaa_rating_R + thtr_rel_year + oscar_season + summer_season + imdb_rating + imdb_num_votes + critics_score + best_pic_nom + best_pic_win + best_actor_win + best_actress_win + best_dir_win + top200_box
+
+*Bayesian Model Averaging (BMA):*
+A comprehensive approach to address model uncertainty is Bayesian model averaging, which allows us to assess the robustness of results to alternative specifications by calculating posterior distributions over coefficients and models. Given the 17 features (n) there can be 2^n = 2^17 possible models. We will explore model uncertainty using posterior probabilities of models based on BIC. 
+We will use BIC as a way to approximate the log of the marginal likelihood. The Bayesian information criterion (BIC) runs through several fitted model objects for which a log-likelihood value can be obtained, according to the formula -2log-likelihood + nparlog(nobs), where npar represents the number of parameters and nobs the number of observations in the fitted model.
+
+Seperating the required features into a seperate dataframe:
+```{r}
+features <- c('audience_score', 'feature_film', 'drama', 'runtime', 'mpaa_rating_R', 'thtr_rel_year', 'oscar_season', 'summer_season', 'imdb_rating', 'imdb_num_votes', 'critics_score', 'best_pic_nom', 'best_pic_win', 'best_actor_win', 'best_actress_win', 'best_dir_win','top200_box')
+moviesmodel=movies[ , features]
+summary(moviesmodel)
+```
+
+There seem to be no NA values, so we can proceed with the model selection process.
+
+**Bayesian Information Criterion:**
+
+First, we create a multiple linear regression model, with all the factors included.
+
+```{r}
+audmodel=lm(audience_score~. , data=moviesmodel)
+summary(audmodel)
+```
+
+It is very evident that the number of factors that are not useful is very high. We can use the BIC (Bayesian Information Criterion) to eliminate the factors that are not significant in this model.
+
+```{r}
+audienceBIC=bas.lm(audience_score~ ., data=moviesmodel,prior="BIC",modelprior=uniform())
+audienceBIC
+```
+
+These values denote the marginal posterior inclusion probabilities. We can actually see that IMDB rating and critics score do play a big role.
+
+From this object, we can get the top 5 most probable models:
+```{r}
+summary(audienceBIC)
+```
+
+We can see that the most probable model contains only 3 variables, runtime, IMDB score and Critics score. The second most probable model contains 2 variables, IMDB score and Critics score.
+
+The posterior probability for the top 2 most probably models are about 27%.
+
+*Coeffecients:*
+
+We can extract the coeffecients from the Bayesian model into a seperate variable:
+```{r}
+audiencecoeff=coef(audienceBIC)
+
+#95% Credible Intervals for coeffecients:
+audinterval=confint(audiencecoeff)
+audinterval
+```
+
+Let us look at what the 3 most important variables mean.
+
+For every 1 point increase in the runtime, the audience score is -2.5e-02 minutes lesser. Similarly, for every 1 point increase in the IMDB rating the audience score is 1.49e+01 points more. And for the Critics score there is an audience score increase of 6.33e-02 points. 
+
+*Model space:*
+
+We can visualize the model space using the image() function. 
+
+```{r}
+image(audienceBIC,rotate=FALSE)
+```
+
+Due to size constraints, all 17 variables are not shown in this picture. By opening this plot in a new window, all 17 variables are visible and it is evident that 'runtime + imdb_rating + critics_score' is the best model. Also imdb rating and critics score are present in all the top models. 
+
+**Zellner-Siow Cauchy:**
+
+Using Zellner-Siow Cauchy, with an MCMC method, we can get a different model:
+
+```{r}
+audiencezs=bas.lm(audience_score~ .,  data=moviesmodel,prior="ZS-null",modelprior=uniform(),method="MCMC")
+summary(audiencezs)
+```
+
+Here, the most probable model, with a posterior probability of 14% has only IMDB rating and Critics score. And the 2nd most probable model, with a posterior probability of 12% has runtime, IMDB rating and Critics score. These results are very similar to the BIC method, with only a swap in the first two models. 
+
+*Model space:*
+
+We can visualize the models created:
+
+```{r}
+image(audiencezs,rotate=FALSE)
+```
+
+Again, expanding the image, we can see that IMDB rating and Critics score are the major factors. Here, runtime doesn't seem to be playing a huge role. 
+
+
+So we can clearly see that while BIC proposes 3 variables (runtime, imdb_rating, critics_score), the ZSC method only proposes 2 (imdb_rating, critics_score).
+
+**AIC Model Selection:**
+
+The Aikake information criterion (AIC) is a measure of the relative quality of statistical models for a given set of data. Given a collection of models for the data, AIC estimates the quality of each model, relative to each of the other models. Hence, AIC provides a means for model selection. 
+
+We can use backward elimination to find the best model:
+
+```{r}
+lmaic=lm(audience_score~ ., data=moviesmodel)
+audienceaic=stepAIC(lmaic,direction='backward',trace=FALSE)
+audienceaic$anova
+```
+
+We can see that there are a lot more variables in this method: summer_season, top200_box, best_dir_win, best_pic_win, oscar_season, feature_film, drama, imdb_num_votes.
+
+```{r}
+audienceaic$coefficients
+```
+
+Here, for example, for every 1 point increase in the IMDB rating, the Audience Score increases by 15 points, which is a lot.
+
+
+**Final Model:**
+
+In our final model, we are going to use IMDB ratings and Critics score as the two variables, with the Zellner-Siow Cauchy prior, and MCMC method, with 10^6 iterations of MCMC. 
+
+```{r}
+feat=c("audience_score","imdb_rating","critics_score")
+moviesfinal=movies[,feat]
+audiencezsfin=bas.lm(audience_score~.,data=moviesfinal,prior="ZS-null",modelprior=uniform(),method="MCMC",MCMC.iteration=10^6)
+summary(audiencezsfin)
+```
+
+We can see that in this, the first model, which has both variables, has 89% posterior probability. 
+
+
+**Model Diagnostics:**
+
+We will now look at the best model created:
+
+```{r}
+diagnostics(audiencezs, type = "model", pch = 16, cex = 1.5)
+```
+
+It shows about a straight line at the intercept, which shows a converged posterior probability.
+
+```{r}
+plot(audiencezs, which = 1, pch=16)
+abline(a = 0, b = 0, lwd = 2)
+```
+
+There seem to be few outliers, but the points are randomly scattered across the 0 line. 
+
+```{r}
+plot(audiencezs, which=2,add.smooth = F)
+```
+
+The probability starts to straigthen around the 800th model appx, meaning all the models after that don't make much of a difference.
+
+```{r}
+plot(audiencezs, which=3, ask=F)
+```
+
+These log marginal probabilites are pretty evenly distributed, somewhat favouring 4 or 5 factors.
+
+```{r}
+plot(audiencezs, which = 4, ask = F, col.in = "red")
+```
+
+We can see again, that imdb_rating and critics_score matter the most. 
+
+* * *
+
+## Part 5: Prediction
+
+The movie we are going to pick is Money Monster, a movie directed by Jodie Foster, starring George Clooney and Julia Roberts. (https://www.rottentomatoes.com/m/money_monster/) The audience score is 60%. 
+
+We create the BMA object first:
+
+```{r}
+BMA=predict(audiencezsfin,estimator="BMA", se.fit=TRUE)
+```
+
+We create a data frame with the values to be predicted: 
+
+```{r}
+pred=data.frame(imdb_rating=6.5,critics_score=58)
+aud=predict(audiencezsfin,newdata=pred,estimator="BMA",se.fit=TRUE)
+aud$fit
+```
+
+We get an estimated audience score of 62.49, which is a little higher than the actual score
+
+The 95% credible interval is:
+
+```{r}
+audinterval=confint(aud,parm="mean")
+round(audinterval,3)
+```
+
+We get a confidence interval close to the 60% we were looking for. 
+
+
+* * *
+
+
+## Part 6: Conclusion
+
+The predictive model presented here is used to predict the audience scores for a movie. Using Bayesian model averaging and many factors like BIC, ZSC, AIC, etc, many models can be constructed to perform better predictions. 
+
+The proposed linear model shows a 'fairly good' prediction rate, but it should be noted that the model is based on a very small sample. The fact is that imdb_rating has the highest posterior probability, and that basically all of the newly created features were not that useful to support a better prediction. Creating a model, which has a high predictive power is not so easy to reach. Using Bayes for better prediction is only one part of the game. It might be beneficial to gather more data or try to extend the feature engineering part, which means to creating new meaningful features from existing or gather data for new features. 
+
+Perhaps in a future project, for higher accuracy, we could have included all the remaining factors as well, which was done in the project for the 3rd course of this specialization, and then eliminated them one by one. Even though such models might be prone to overfitting or underfitting, these problems can certainly be mitigated using expert opinion on which factors are actually useful. 
+
+* * *
