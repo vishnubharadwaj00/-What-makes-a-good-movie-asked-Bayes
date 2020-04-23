@@ -1,4 +1,4 @@
-# What makes a good movie?, asked Bayes
+# What makes a good movie? asked Bayes
 Bayes wanted to know whether he could predict the movie ratings. At least that's what he would have asked if he were alive today. So, on his behalf, his statistical methodologies are used in this project.
 
 ### The Data
