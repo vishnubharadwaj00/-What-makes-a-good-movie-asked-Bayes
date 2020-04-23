@@ -1,5 +1,5 @@
-# What-makes-a-good-movie-asked-Bayes
-Bayes wanted to know whether he could predict the movie ratings so his methodologies were introduced in this project.
+# What makes a good movie?, asked Bayes
+Bayes wanted to know whether he could predict the movie ratings. At least that's what he would have asked if he were alive today. So, on his behalf, his statistical methodologies are used in this project.
 
 ### The Data
 
@@ -14,13 +14,15 @@ The present data were derived from an observational study. The data set is compr
 *Causality* 
 The data cannot be used to establish a causal relation between the variables of interest as there was no random assignment to the explanatory and independent variables.
 
+### Programming Environment
 
-**Conclusion**
+All programming was done with R, using the RStudio IDE. The full code can be found in the Rmd file. 
+
+## Conclusion
 
 The predictive model presented here is used to predict the audience scores for a movie. Using Bayesian model averaging and many factors like BIC, ZSC, AIC, etc, many models can be constructed to perform better predictions.
 
-The proposed linear model shows a ‘fairly good’ prediction rate, but it should be noted that the model is based on a very small sample. The fact is that imdb_rating has the highest posterior probability, and that basically all of the newly created features were not that useful to support a better prediction. Creating a model, which has a high predictive power is not so easy to reach. Using Bayes for better prediction is only one part of the game. It might be beneficial to gather more data or try to extend the feature engineering part, which means to creating new meaningful features from existing or gather data for new features.
+The proposed linear model shows a ‘fairly good’ prediction rate, **(around 85%)** but it should be noted that the model is based on a very small sample. The fact is that imdb_rating has the highest posterior probability, and that basically all of the newly created features were not that useful to support a better prediction. Creating a model, which has a high predictive power is not so easy to reach. Using Bayes for better prediction is only one part of the game. It might be beneficial to gather more data or try to extend the feature engineering part, which means to creating new meaningful features from existing or gather data for new features.
 
-Perhaps in a future project, for higher accuracy, we could have included all the remaining factors as well, which was done in the project for the 3rd course of this specialization, and then eliminated them one by one. Even though such models might be prone to overfitting or underfitting, these problems can certainly be mitigated using expert opinion on which factors are actually useful.
+Perhaps in a future project, for higher accuracy, we could have included all the remaining factors as well, and then eliminated them one by one. Even though such models might be prone to overfitting or underfitting, these problems can certainly be mitigated using expert opinion on which factors are actually useful.
 
-Note: All programming was done with R, and the full code can be found in the Rmd file. 
